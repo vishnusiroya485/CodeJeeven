@@ -22,54 +22,6 @@ const CountUp = ({ end, duration, suffix = "", decimals = 0 }) => {
   return <span>{count.toFixed(decimals)}{suffix}</span>;
 };
 
-const servicesData = [
-  {
-    id: 1,
-    title: "BSNL Authorities Service",
-    desc: "Instant BSNL prepaid and postpaid recharges. Never run out of balance with our blazing fast API. Experience seamless, highly secure digital payments right at your fingertips.",
-    image: "/images/About_BSnl.png",
-    color: "#F02476",
-    bgColor: "bg-[#FFF0F5] dark:bg-[#F02476]/10",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F02476" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-  },
-  {
-    id: 2,
-    title: "AEPS Service",
-    desc: "Aadhaar Enabled Payment System allows seamless cash withdrawals and balance inquiries using biometric authentication. Extremely secure and available 24/7.",
-    image: "/images/About_API.png",
-    color: "#8B5CF6",
-    bgColor: "bg-[#F5F3FF] dark:bg-[#8B5CF6]/10",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-  },
-  {
-    id: 3,
-    title: "BBPS (Bharat Bill Pay)",
-    desc: "Pay all your utility bills including Electricity, Water, Gas, and Fastag instantly through the integrated Bharat Bill Payment System. One stop solution.",
-    image: "/images/About_BSnl.png",
-    color: "#F97316",
-    bgColor: "bg-[#FFF7ED] dark:bg-[#F97316]/10",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-  },
-  {
-    id: 4,
-    title: "Bus Booking",
-    desc: "Book bus tickets across India seamlessly via our robust API integration. Wide network, confirmed seats, and real-time updates for a hassle-free travel experience.",
-    image: "/images/About_bus.jpg",
-    color: "#3B82F6",
-    bgColor: "bg-[#EFF6FF] dark:bg-[#3B82F6]/10",
-    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2"><rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect><path d="M2 17h20"></path><path d="M6 17v2"></path><path d="M18 17v2"></path></svg>
-  }
-];
-
-const miniServices = [
-  { id: 1, title: "Mobile Recharge", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg> },
-  { id: 2, title: "DTH Booking", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 12a10 10 0 1 0 20 0 10 10 0 1 0-20 0Z"></path><path d="M2 12h20"></path><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg> },
-  { id: 3, title: "Electricity Bill", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg> },
-  { id: 4, title: "FASTag Recharge", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> },
-  { id: 5, title: "Bus Booking", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect><path d="M2 17h20"></path><path d="M6 17v2"></path><path d="M18 17v2"></path></svg> },
-  { id: 6, title: "Insurance", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> },
-  { id: 7, title: "Water Bill", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg> },
-];
 
 function useScrollFade() {
   const [isVisible, setIsVisible] = useState(false);
@@ -78,8 +30,9 @@ function useScrollFade() {
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) setIsVisible(true);
     }, { threshold: 0.2 });
-    if (ref.current) observer.observe(ref.current);
-    return () => { if (ref.current) observer.unobserve(ref.current); };
+    const currentRef = ref.current;
+    if (currentRef) observer.observe(currentRef);
+    return () => { if (currentRef) observer.unobserve(currentRef); };
   }, []);
   return [ref, isVisible];
 }
@@ -108,11 +61,10 @@ export default function Home() {
       },
       { threshold: 0.2 }
     );
-    if (whyChooseUsRef.current) {
-      observer.observe(whyChooseUsRef.current);
-    }
+    const currentRef = whyChooseUsRef.current;
+    if (currentRef) observer.observe(currentRef);
     return () => {
-      if (whyChooseUsRef.current) observer.unobserve(whyChooseUsRef.current);
+      if (currentRef) observer.unobserve(currentRef);
     };
   }, []);
 

@@ -207,8 +207,8 @@ export default function App() {
               <div>
                 <h4 className="font-bold text-white mb-4">Legal</h4>
                 <ul className="flex flex-col gap-3">
-                  <li><a href="#" className="text-gray-400 text-sm hover:text-[#F02476] transition-colors">Privacy Policy</a></li>
-                  <li><a href="#" className="text-gray-400 text-sm hover:text-[#F02476] transition-colors">Terms of Service</a></li>
+                  <li><a href="/#privacy" className="text-gray-400 text-sm hover:text-[#F02476] transition-colors">Privacy Policy</a></li>
+                  <li><a href="/#terms" className="text-gray-400 text-sm hover:text-[#F02476] transition-colors">Terms of Service</a></li>
                 </ul>
               </div>
             </div>
