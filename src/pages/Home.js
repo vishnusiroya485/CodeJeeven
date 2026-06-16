@@ -3,9 +3,29 @@ import { Link } from 'react-router-dom';
 
 const CountUp = ({ end, duration, suffix = "", decimals = 0 }) => {
   const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
 
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    const currentRef = ref.current;
+    if (currentRef) observer.observe(currentRef);
+    return () => {
+      if (currentRef) observer.unobserve(currentRef);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
     let startTimestamp = null;
+    let animationFrameId;
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       // Use easeOutQuart for a smoother counting effect
@@ -13,13 +33,17 @@ const CountUp = ({ end, duration, suffix = "", decimals = 0 }) => {
       const easeProgress = 1 - Math.pow(1 - progress, 4);
       setCount(easeProgress * end);
       if (progress < 1) {
-        window.requestAnimationFrame(step);
+        animationFrameId = window.requestAnimationFrame(step);
       }
     };
-    window.requestAnimationFrame(step);
-  }, [end, duration]);
+    animationFrameId = window.requestAnimationFrame(step);
+    
+    return () => {
+      if (animationFrameId) window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [end, duration, isVisible]);
 
-  return <span>{count.toFixed(decimals)}{suffix}</span>;
+  return <span ref={ref}>{count.toFixed(decimals)}{suffix}</span>;
 };
 
 
@@ -41,6 +65,14 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(
     new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
   );
+
+  const [activeFaq, setActiveFaq] = useState(null);
+
+  const faqs = [
+    { q: "How many days does it take to get a website ready?", a: "Small websites take 7-10 days, while custom portals take 20-30 days to be fully ready." },
+    { q: "Do you provide API documentation?", a: "Yes, we provide complete and comprehensive Postman documentation for all our API integrations." },
+    { q: "How is the after-sales support?", a: "We provide 24/7 dedicated support along with 3-6 months of free maintenance for all projects." }
+  ];
   
   // Scroll Animation Observer for Why Choose Us
   const whyChooseUsRef = useRef(null);
@@ -74,161 +106,219 @@ export default function Home() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const resize = () => {
+      if (!canvas) return;
+      canvas.width = canvas.parentElement.offsetWidth;
+      canvas.height = canvas.parentElement.offsetHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    let count = 0;
+    const render = () => {
+      if (!canvas || !ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const cols = 35;
+      const rows = 4; // Only 4 elegant wave lines
+      const gapX = canvas.width / (cols - 1);
+      const gapY = canvas.height / (rows - 1);
+      
+      // Draw flowing wave lines
+      for (let r = 0; r < rows; r++) {
+        ctx.beginPath();
+        for (let c = 0; c < cols; c++) {
+          const angleX = c * 0.1 + count * 0.008;
+          const angleY = r * 0.5 + count * 0.005;
+          const x = c * gapX;
+          const y = (r * gapY * 0.6) + (canvas.height * 0.15) + Math.sin(angleX) * 40 + Math.cos(angleY) * 20;
+          
+          if (c === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        const opacity = 0.06; // Extremely light, faint opacity
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        grad.addColorStop(0, `rgba(59, 130, 246, 0.01)`);
+        grad.addColorStop(0.3, `rgba(59, 130, 246, ${opacity})`);
+        grad.addColorStop(0.7, `rgba(14, 165, 233, ${opacity})`);
+        grad.addColorStop(1, `rgba(14, 165, 233, 0.01)`);
+        
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.2; // Thin premium line
+        ctx.stroke();
+      }
+      
+      count += 1;
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
   return (
     <>
-      {/* 1. HERO SECTION */}
-      <section id="hero" className="relative pt-24 lg:pt-32 pb-20 overflow-hidden bg-white dark:bg-[#0A0A0A] transition-colors duration-300">
+      {/* Custom Keyframes for Background Blobs */}
+      <style>{`
+        @keyframes float-slow-1 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.08); }
+          66% { transform: translate(-20px, 20px) scale(0.96); }
+        }
+        @keyframes float-slow-2 {
+          0%, 100% { transform: translate(0px, 0px) scale(1.08); }
+          50% { transform: translate(-40px, 40px) scale(0.95); }
+          100% { transform: translate(0px, 0px) scale(1.08); }
+        }
+        .animate-float-slow-1 { animation: float-slow-1 16s ease-in-out infinite; }
+        .animate-float-slow-2 { animation: float-slow-2 20s ease-in-out infinite; }
+      `}</style>
+
+      <section id="hero" className="relative pt-20 lg:pt-24 pb-16 overflow-hidden bg-white dark:bg-[#0A0A0A] transition-colors duration-300">
+        {/* HERO_BG_CJ Background Image (Clear and Visible) */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/HERO_BG_CJ.JPG" 
+            alt="Hero Background" 
+            className="w-full h-full object-cover opacity-95 dark:opacity-85 pointer-events-none"
+          />
+          {/* Subtle gradient overlay to ensure text contrast while keeping image visible */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/60 to-white dark:from-[#0A0A0A]/10 dark:via-[#0A0A0A]/60 dark:to-[#0A0A0A] pointer-events-none"></div>
+        </div>
+
+        {/* Dynamic Canvas Background (Flowing Waves) */}
+        <canvas 
+          ref={canvasRef} 
+          className="absolute inset-0 w-full h-full z-1 opacity-70 dark:opacity-80 pointer-events-none"
+        />
+
+        {/* Subtle Tech Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] z-1"></div>
+
         {/* Adjusted max-w and reduced gap to fix excessive center spacing */}
-        <div className="max-w-[1300px] mx-auto px-6 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-12">
+        <div className="max-w-[1300px] mx-auto px-6 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-6 relative z-10">
           
           {/* Left Content */}
-          <div className="flex-1 text-center lg:text-left z-10 mt-4 lg:mt-0 mb-12 lg:mb-0 animate-fade-in-up delay-200">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#FFF0F5] dark:bg-white/5 border border-[#FFD1E3] dark:border-white/10 text-[#F02476] font-bold text-xs mb-4 shadow-sm">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#F02476] animate-pulse"></span>
+          <div className="flex-1 text-center lg:text-left z-10 mt-6 lg:mt-4 mb-8 lg:mb-0 animate-fade-in-up delay-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F0FDF4] dark:bg-white/5 border border-[#A7F3D0] dark:border-white/10 text-[#10b981] font-bold text-xs mb-4 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse"></span>
               100% Secure & Trusted
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#111111] dark:text-white leading-[1.1] mb-4 tracking-tight">
-              <span className="whitespace-nowrap">
-                Smart{' '}
-                <span className="relative inline-block">
-                  <span className="text-[#F02476] relative z-10">BSNL</span>
-                  {/* Overlay for shine with overflow-hidden so it doesn't break baseline */}
-                  <span className="absolute inset-0 overflow-hidden rounded-sm pointer-events-none z-20">
-                    <div className="absolute inset-0 top-0 -left-[100%] w-[150%] h-full bg-gradient-to-r from-transparent via-white/60 dark:via-white/20 to-transparent animate-[shine_4s_infinite]"></div>
-                  </span>
-                </span>{' '}
-                Recharge
-              </span><br />
-              <span className="text-[#F35F20]">Platform</span>
+            <h1 className="text-[34px] md:text-[46px] lg:text-[56px] font-extrabold text-[#111111] dark:text-white leading-[1.1] mb-6 tracking-tight">
+              Scale Your Business <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f766e] to-[#10b981]">with CodeJeevan</span>
             </h1>
             
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-6 max-w-[480px] leading-relaxed mx-auto lg:mx-0">
-              Fast, secure, and reliable APIs for BSNL recharges and digital payments. Grow your retail business today.
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-[500px] leading-relaxed mx-auto lg:mx-0">
+              Next-generation Web Development, High-Speed Payment APIs, and aggressive SEO strategies designed for the modern enterprise.
             </p>
-
-            {/* Feature Bullets */}
-            <div className="flex flex-col gap-2.5 mb-8 text-gray-600 dark:text-gray-300 font-semibold mx-auto lg:mx-0 max-w-[500px] text-[14px]">
-              <div className="flex items-center justify-center lg:justify-start gap-2.5">
-                <div className="w-4 h-4 rounded-full bg-[#FFF0F5] dark:bg-white/5 flex items-center justify-center shrink-0">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F02476" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <span>99.99% Industry-leading API Uptime</span>
-              </div>
-              <div className="flex items-center justify-center lg:justify-start gap-2.5">
-                <div className="w-4 h-4 rounded-full bg-[#FFF0F5] dark:bg-white/5 flex items-center justify-center shrink-0">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F02476" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <span>Instant Commission Settlements</span>
-              </div>
-              <div className="flex items-center justify-center lg:justify-start gap-2.5">
-                <div className="w-4 h-4 rounded-full bg-[#FFF0F5] dark:bg-white/5 flex items-center justify-center shrink-0">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F02476" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <span>24/7 Dedicated Retailer Support</span>
-              </div>
-            </div>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-6">
-              <button className="relative overflow-hidden w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-[#F02476] to-[#F35F20] text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#F02476]/30 transition-all transform hover:-translate-y-0.5 group">
-                <span className="relative z-10">Get Started</span>
+              <button className="relative overflow-hidden w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-[#0f766e] to-[#10b981] text-white rounded-xl font-bold hover:shadow-lg hover:shadow-[#10b981]/30 transition-all transform hover:-translate-y-0.5 group">
+                <span className="relative z-10">Explore Solutions</span>
                 {/* Shine effect */}
                 <div className="absolute inset-0 top-0 -left-[100%] w-[150%] h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shine_4s_infinite]"></div>
               </button>
-              <button className="w-full sm:w-auto px-7 py-3.5 bg-[#FFF0F5] dark:bg-white/5 text-[#F02476] dark:text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#FFE4EE] dark:hover:bg-white/10 transition-colors border border-[#FFD1E3] dark:border-white/10">
-                Learn More <span>&rarr;</span>
-              </button>
+              <Link to="/contact" className="w-full sm:w-auto px-7 py-3.5 bg-transparent text-[#10b981] dark:text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-80 hover:scale-95 transition-all border border-[#10b981] dark:border-white/20">
+                Contact Us <span>&rarr;</span>
+              </Link>
             </div>
             
             <div className="flex items-center justify-center lg:justify-start gap-3">
               <div className="flex -space-x-3">
-                <div className="w-7 h-7 rounded-full border-2 border-white bg-[#F02476] text-white flex items-center justify-center font-bold text-[9px] shadow-sm">RK</div>
-                <div className="w-7 h-7 rounded-full border-2 border-white bg-[#F35F20] text-white flex items-center justify-center font-bold text-[9px] shadow-sm">MS</div>
+                <div className="w-7 h-7 rounded-full border-2 border-white bg-[#0f766e] text-white flex items-center justify-center font-bold text-[9px] shadow-sm">RK</div>
+                <div className="w-7 h-7 rounded-full border-2 border-white bg-[#10b981] text-white flex items-center justify-center font-bold text-[9px] shadow-sm">MS</div>
                 <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-500 text-white flex items-center justify-center font-bold text-[9px] shadow-sm">PJ</div>
               </div>
               <div className="text-xs font-semibold text-gray-500">
-                Active Retailers & Distributors
+                Happy Clients & Partners
               </div>
             </div>
           </div>
           
-          {/* Right Content: Mobile Mockup */}
-          <div className="flex-1 w-full relative flex justify-center lg:justify-end animate-fade-in-up delay-300 -mt-8 lg:mt-0">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#FFF0F5] dark:from-[#F02476]/10 to-[#FFF5F0] dark:to-[#F35F20]/5 rounded-[60px] transform scale-110 -z-10 translate-x-0 lg:translate-x-4"></div>
-            
-            {/* The Phone (Smaller) */}
-            <div className="w-[270px] h-[490px] bg-white dark:bg-[#1A1A1A] rounded-[36px] border-[8px] border-[#111111] dark:border-[#222222] shadow-[0_30px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col transition-colors duration-300">
-              {/* Notch */}
-              <div className="absolute top-0 inset-x-0 h-4 bg-[#111111] dark:bg-[#222222] w-[100px] mx-auto rounded-b-xl z-20"></div>
-              
-              {/* Screen Top */}
-              <div className="px-4 pt-3 pb-2 flex justify-between items-center text-gray-900 dark:text-white z-10 bg-white/80 dark:bg-[#1A1A1A]/80 backdrop-blur-md">
-                <img src="/images/LOGO.png" alt="JaiJui" className="h-4 w-auto object-contain" />
-                <div className="flex items-center gap-1.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"></path><path d="M1.42 9a16 16 0 0 1 21.16 0"></path><path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path><line x1="12" y1="20" x2="12.01" y2="20"></line></svg>
-                  <span className="text-[10px] font-bold ml-0.5">{currentTime}</span>
-                </div>
-              </div>
-              
-              <div className="px-4 flex-1 bg-gray-50 dark:bg-[#111111] pt-1">
-                <h2 className="text-xl font-extrabold text-gray-900 dark:text-white mb-4">Recharge</h2>
-                
-                {/* BSNL Banner */}
-                <div className="flex items-center gap-2 mb-3 bg-white dark:bg-[#1A1A1A] p-2 rounded-xl shadow-sm border border-gray-100 dark:border-white/5">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 border border-gray-100 dark:border-gray-700 overflow-hidden shadow-sm p-0.5">
-                    <img src="/images/BSNL_icon.png" alt="BSNL" className="w-full h-full object-contain rounded-full" />
-                  </div>
-                  <div>
-                    <h3 className="text-gray-900 dark:text-white font-extrabold text-[12px] leading-tight">BSNL Pre-Paid</h3>
-                    <p className="text-[9px] text-[#F02476] font-medium mt-0.5">Fast & Secure</p>
-                  </div>
-                </div>
-                
-                {/* Input */}
-                <div className="w-full bg-white dark:bg-[#1A1A1A] rounded-xl p-2.5 mb-3 shadow-sm border border-gray-100 dark:border-white/5 flex items-center">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" className="mr-2 shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                  <span className="text-gray-900 dark:text-white font-bold text-[12px] tracking-wide">+91 99999 00000</span>
-                </div>
-                
-                {/* Plan Grid */}
-                <div className="flex gap-2 mb-3">
-                  <div className="flex-1 rounded-xl bg-gradient-to-br from-[#F02476] to-[#F35F20] p-2 relative overflow-hidden shadow-md shadow-[#F02476]/30 group">
-                    <div className="absolute inset-0 top-0 -left-[100%] w-[150%] h-full bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shine_3s_infinite]"></div>
-                    <div className="bg-white text-[#F02476] text-[7px] font-extrabold px-1.5 py-0.5 rounded inline-block mb-1 shadow-sm relative z-10">POPULAR</div>
-                    <div className="text-lg font-black text-white mb-0.5 relative z-10">₹399</div>
-                    <div className="text-[8px] text-white/90 leading-tight font-medium relative z-10">56 Days -<br/>2GB/Day</div>
-                  </div>
-                  <div className="flex-1 rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/5 p-2 flex flex-col justify-center shadow-sm">
-                    <div className="text-base font-extrabold text-gray-900 dark:text-white mb-0.5">₹199</div>
-                    <div className="text-[8px] text-gray-500 dark:text-gray-400 leading-tight font-medium">28 Days -<br/>1.5GB/Day</div>
-                  </div>
-                </div>
-                
-                {/* Button */}
-                <button className="relative overflow-hidden w-full py-2.5 bg-[#111111] dark:bg-white text-white dark:text-[#111111] rounded-xl font-bold text-[11px] hover:bg-black dark:hover:bg-gray-200 transition-colors mb-3 shadow-lg shadow-black/10">
-                  <span className="relative z-10">Proceed to Pay</span>
-                  <div className="absolute inset-0 top-0 -left-[100%] w-[150%] h-full bg-gradient-to-r from-transparent via-white/20 dark:via-black/10 to-transparent animate-[shine_4s_infinite]"></div>
-                </button>
-                
-                {/* Success Alert */}
-                <div className="w-full bg-[#ECFDF5] dark:bg-[#10B981]/10 border border-[#A7F3D0] dark:border-[#10B981]/20 rounded-xl p-2.5 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center shrink-0 shadow-sm">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  </div>
-                  <div>
-                    <p className="text-[#065F46] dark:text-[#34D399] text-[10px] font-extrabold leading-none mb-0.5">Recharge Successful</p>
-                    <p className="text-[#059669] dark:text-[#10B981] text-[8px] font-medium leading-none">Today 10:45 AM</p>
-                  </div>
-                </div>
-                
-              </div>
-            </div>
-            
+          {/* Right Content: Illustration Only */}
+          <div className="flex-1 w-full relative flex items-center justify-center lg:justify-end animate-fade-in-up delay-300 mt-12 lg:mt-0 py-8 z-10">
+            <img 
+              src="/images/illustration.png" 
+              alt="CodeJeevan Software Agency Illustration" 
+              className="w-full max-w-[580px] h-auto object-contain hover:scale-[1.03] transition-transform duration-500 ease-out z-10" 
+            />
           </div>
         </div>
       </section>
 
+      {/* 1.5 SERVICES TICKER (PILL BADGES) */}
+      <div className="py-5 bg-[#0B0E14] border-y border-white/[0.02] overflow-hidden">
+        {(() => {
+          const tickerServices = [
+             { name: "WhatsApp Bulk API", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>, color: "text-[#10B981]", bg: "bg-[#10B981]/10" },
+             { name: "Payment Gateway", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>, color: "text-[#8B5CF6]", bg: "bg-[#8B5CF6]/10" },
+             { name: "IMPS Payout API", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M16 3h5v5"></path><path d="M4 21h5v-5"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>, color: "text-[#06B6D4]", bg: "bg-[#06B6D4]/10" },
+             { name: "SEO Services", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><polyline points="11 8 11 12 14 15"></polyline></svg>, color: "text-[#EC4899]", bg: "bg-[#EC4899]/10" },
+             { name: "Custom Portals", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>, color: "text-[#14B8A6]", bg: "bg-[#14B8A6]/10" },
+             { name: "Web Development", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>, color: "text-[#10b981]", bg: "bg-[#10b981]/10" },
+             { name: "Digital Marketing", icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>, color: "text-[#F59E0B]", bg: "bg-[#F59E0B]/10" }
+          ];
 
+          return (
+            <div className="relative w-full overflow-hidden flex items-center group">
+              {/* Fade Overlays */}
+              <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-[#0B0E14] to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-[#0B0E14] to-transparent z-10 pointer-events-none"></div>
+              
+              {/* Scrolling Container */}
+              <div className="flex animate-scroll-x group-hover:[animation-play-state:paused] w-max">
+                
+                {/* First Set */}
+                <div className="flex gap-4 pr-4">
+                  {tickerServices.map((service, idx) => (
+                    <div key={`set1-${idx}`} className="flex items-center gap-3 bg-[#161B22] hover:bg-[#1E242D] border border-white/5 hover:border-white/10 rounded-full px-5 py-2.5 transition-all duration-300 cursor-pointer group/pill shadow-sm">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center ${service.bg} ${service.color} group-hover/pill:scale-110 transition-transform duration-300 shadow-inner`}>
+                        {service.icon}
+                      </div>
+                      <span className="text-gray-300 font-bold text-[13px] tracking-wide whitespace-nowrap group-hover/pill:text-white transition-colors">
+                        {service.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Second Set (Duplicate for seamless loop) */}
+                <div className="flex gap-4 pr-4">
+                  {tickerServices.map((service, idx) => (
+                    <div key={`set2-${idx}`} className="flex items-center gap-3 bg-[#161B22] hover:bg-[#1E242D] border border-white/5 hover:border-white/10 rounded-full px-5 py-2.5 transition-all duration-300 cursor-pointer group/pill shadow-sm">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center ${service.bg} ${service.color} group-hover/pill:scale-110 transition-transform duration-300 shadow-inner`}>
+                        {service.icon}
+                      </div>
+                      <span className="text-gray-300 font-bold text-[13px] tracking-wide whitespace-nowrap group-hover/pill:text-white transition-colors">
+                        {service.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
+      </div>
 
       {/* 2. ABOUT SECTION */}
       <section id="about" className="relative py-16 bg-[#F8FAFC] dark:bg-[#111111] transition-colors duration-300">
@@ -236,151 +326,158 @@ export default function Home() {
         <div className="relative max-w-[1300px] mx-auto px-6 lg:px-12 flex flex-col gap-8 items-center z-10 text-center">
           
           <div className="max-w-4xl">
-            <h4 className="text-[#F02476] font-extrabold text-[11px] tracking-widest mb-4 uppercase inline-flex items-center gap-3">
-              <span className="w-10 h-0.5 bg-[#F02476]/30"></span>
-              About JaiJui
-              <span className="w-10 h-0.5 bg-[#F02476]/30"></span>
+            <h4 className="text-[#10b981] font-extrabold text-[11px] tracking-widest mb-4 uppercase inline-flex items-center gap-3">
+              <span className="w-10 h-0.5 bg-[#10b981]/30"></span>
+              About CodeJeevan
+              <span className="w-10 h-0.5 bg-[#10b981]/30"></span>
             </h4>
             <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6 leading-tight">
-              Pioneering the Future of <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F02476] to-[#F35F20]">Digital India</span>
+              Empowering Enterprises with <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f766e] to-[#10b981]">Next-Gen Tech</span>
             </h2>
             <p className="text-gray-600 dark:text-gray-300 font-medium leading-relaxed text-lg max-w-3xl mx-auto">
-              At JaiJui FinTech, we are more than just a payment platform. We are the architects of a seamless digital economy. By blending cutting-edge technology with unparalleled user convenience, we deliver lightning-fast BSNL mobile recharges, robust API-driven bus ticket bookings, and a secure payment gateway trusted by millions across the nation.
+              At CodeJeevan, we are the architects of digital transformation. We blend cutting-edge web development, seamless API integrations, and data-driven SEO strategies to build scalable, high-performance platforms that drive explosive growth for modern businesses.
             </p>
           </div>
           
           <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-2">
-            {/* Pink Tint */}
-            <div className="bg-[#FFF0F5] dark:bg-[#F02476]/10 p-4 rounded-3xl border border-[#F02476]/10 dark:border-[#F02476]/20 text-center flex flex-col justify-center items-center h-[110px] hover:-translate-y-2 hover:shadow-lg hover:shadow-[#F02476]/20 transition-all duration-300 group">
-              <h3 className="text-3xl font-extrabold text-[#F02476] dark:text-[#FFD1E3] mb-1 tracking-tight">
-                <CountUp end={10} duration={2.5} suffix="L+" />
+            {/* Blue Tint */}
+            <div className="bg-[#F0FDF4] dark:bg-[#10b981]/10 p-4 rounded-3xl border border-[#10b981]/10 dark:border-[#10b981]/20 text-center flex flex-col justify-center items-center h-[110px] hover:-translate-y-2 hover:shadow-lg hover:shadow-[#10b981]/20 transition-all duration-300 group">
+              <h3 className="text-3xl font-extrabold text-[#10b981] dark:text-[#C7D2FE] mb-1 tracking-tight">
+                <CountUp end={500} duration={2.5} suffix="+" />
               </h3>
-              <p className="text-[10px] text-[#F02476]/70 dark:text-[#FFD1E3]/70 font-bold uppercase tracking-wider">Active Users</p>
+              <p className="text-[10px] text-[#10b981]/70 dark:text-[#C7D2FE]/70 font-bold uppercase tracking-wider">Projects Delivered</p>
             </div>
             {/* Orange Tint */}
             <div className="bg-[#FFF7ED] dark:bg-[#F97316]/10 p-4 rounded-3xl border border-[#F97316]/10 dark:border-[#F97316]/20 text-center flex flex-col justify-center items-center h-[110px] hover:-translate-y-2 hover:shadow-lg hover:shadow-[#F97316]/20 transition-all duration-300 delay-100 group">
               <h3 className="text-3xl font-extrabold text-[#F97316] dark:text-[#FFDBB5] mb-1 tracking-tight">
-                <CountUp end={50} duration={3} suffix="L+" />
+                <CountUp end={200} duration={3} suffix="+" />
               </h3>
-              <p className="text-[10px] text-[#F97316]/70 dark:text-[#FFDBB5]/70 font-bold uppercase tracking-wider">Transactions</p>
+              <p className="text-[10px] text-[#F97316]/70 dark:text-[#FFDBB5]/70 font-bold uppercase tracking-wider">API Integrations</p>
             </div>
             {/* Blue Tint */}
-            <div className="bg-[#EFF6FF] dark:bg-[#3B82F6]/10 p-4 rounded-3xl border border-[#3B82F6]/10 dark:border-[#3B82F6]/20 text-center flex flex-col justify-center items-center h-[110px] hover:-translate-y-2 hover:shadow-lg hover:shadow-[#3B82F6]/20 transition-all duration-300 delay-200 group">
-              <h3 className="text-3xl font-extrabold text-[#3B82F6] dark:text-[#BFDBFE] mb-1 tracking-tight">
-                <CountUp end={500} duration={2.5} suffix="+" />
+            <div className="bg-[#F0FDF4] dark:bg-[#10b981]/10 p-4 rounded-3xl border border-[#10b981]/10 dark:border-[#10b981]/20 text-center flex flex-col justify-center items-center h-[110px] hover:-translate-y-2 hover:shadow-lg hover:shadow-[#10b981]/20 transition-all duration-300 delay-200 group">
+              <h3 className="text-3xl font-extrabold text-[#10b981] dark:text-[#C7D2FE] mb-1 tracking-tight">
+                <CountUp end={99} duration={2.5} suffix="%" />
               </h3>
-              <p className="text-[10px] text-[#3B82F6]/70 dark:text-[#BFDBFE]/70 font-bold uppercase tracking-wider">Retailers</p>
+              <p className="text-[10px] text-[#10b981]/70 dark:text-[#C7D2FE]/70 font-bold uppercase tracking-wider">Client Satisfaction</p>
             </div>
             {/* Purple Tint */}
             <div className="bg-[#F5F3FF] dark:bg-[#8B5CF6]/10 p-4 rounded-3xl border border-[#8B5CF6]/10 dark:border-[#8B5CF6]/20 text-center flex flex-col justify-center items-center h-[110px] hover:-translate-y-2 hover:shadow-lg hover:shadow-[#8B5CF6]/20 transition-all duration-300 delay-300 group">
               <h3 className="text-3xl font-extrabold text-[#8B5CF6] dark:text-[#DDD6FE] mb-1 tracking-tight">
-                <CountUp end={99.9} duration={3} decimals={1} suffix="%" />
+                <CountUp end={24} duration={3} suffix="/7" />
               </h3>
-              <p className="text-[10px] text-[#8B5CF6]/70 dark:text-[#DDD6FE]/70 font-bold uppercase tracking-wider">Uptime</p>
+              <p className="text-[10px] text-[#8B5CF6]/70 dark:text-[#DDD6FE]/70 font-bold uppercase tracking-wider">Expert Support</p>
             </div>
           </div>
           
         </div>
       </section>
+      {/* 3. INFINITE MARQUEE SERVICES SECTION */}
+      {(() => {
+        const row1Services = [
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>, title: "Web Development", desc: "Scalable and secure web apps using React, Node, and PHP.", color: "blue-bg", link: "/service/web" },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.586 7.586"></path><circle cx="11" cy="11" r="2"></circle></svg>, title: "Logo Design", desc: "Unique brand identities that tell your company's story.", color: "green-bg", link: "/service/design" },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>, title: "Digital Marketing", desc: "Results-driven marketing to increase your ROI.", color: "blue-bg", link: "/service/marketing" },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>, title: "WhatsApp Bulk API", desc: "Send automated alerts and marketing messages via WhatsApp.", color: "green-bg", link: "/service/whatsapp" }
+        ];
+        
+        const row2Services = [
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>, title: "Payment Gateway", desc: "Secure and instant payment collection for your website.", color: "blue-bg", link: "/service/payments" },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 3h5v5"></path><path d="M4 21h5v-5"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg>, title: "IMPS Payout API", desc: "Instant merchant payouts and fund settlements 24x7.", color: "green-bg", link: "/service/payouts" },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>, title: "SEO Services", desc: "Aggressive SEO strategies designed for modern enterprise.", color: "blue-bg", link: "/service/seo" },
+          { icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>, title: "Custom Portals", desc: "Tailored portal development for your specific business.", color: "green-bg", link: "/service/portals" }
+        ];
 
-      {/* 3. SERVICES SECTION (ZIG-ZAG) */}
-      <section id="services" className="py-24 bg-white dark:bg-[#0A0A0A] transition-colors duration-300 overflow-hidden">
-        <div className="max-w-[1200px] mx-auto px-6 lg:px-12">
+        return (
+          <section id="services" className="pt-24 pb-12 bg-[#F8FAFC] dark:bg-[#0A0A0A] relative transition-colors duration-300 overflow-hidden z-0">
+            <div className="text-center mb-12 animate-fade-in-up">
+              <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-[#14b8a6]/10 border border-[#14b8a6]/20 text-[#14b8a6] font-bold text-[10px] mb-4 uppercase tracking-widest shadow-sm">
+                Our Expertise
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+                Engineering <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f766e] to-[#10b981]">Digital</span> Excellence
+              </h2>
+            </div>
+
+            <div className="services-marquee-wrapper">
+              {/* TOP TRACK (Scrolls Left) */}
+              <div className="services-track scroll-left mb-6">
+                {[...row1Services, ...row1Services, ...row1Services].map((service, idx) => (
+                  <div className="glass-card group" key={`r1-${idx}`}>
+                    <div className={`icon-box ${service.color}`}>{service.icon}</div>
+                    <h4 className="mt-2 text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#14b8a6] transition-colors">{service.title}</h4>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">{service.desc}</p>
+                    <Link to={service.link} className="service-link">
+                      Learn More <span className="ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              {/* BOTTOM TRACK (Scrolls Right) */}
+              <div className="services-track scroll-right">
+                {[...row2Services, ...row2Services, ...row2Services].map((service, idx) => (
+                  <div className="glass-card group" key={`r2-${idx}`}>
+                    <div className={`icon-box ${service.color}`}>{service.icon}</div>
+                    <h4 className="mt-2 text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#14b8a6] transition-colors">{service.title}</h4>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">{service.desc}</p>
+                    <Link to={service.link} className="service-link">
+                      Learn More <span className="ml-1 group-hover:translate-x-1 transition-transform">&rarr;</span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* 3.5 TECH STACK SECTION */}
+      <section className="pt-8 pb-20 bg-white dark:bg-[#111111] transition-colors duration-300">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-12 text-center">
           
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-[#F02476] font-bold text-[10px] mb-4 uppercase tracking-widest shadow-sm">
-              Our Expertise
-            </div>
-            <h2 className="text-4xl md:text-5xl font-extrabold text-[#111111] dark:text-white">Premium Digital Services</h2>
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
+            Built with <span className="text-[#10b981]">Modern Tech</span>
+          </h2>
+          <div className="w-12 h-1.5 bg-[#10b981] mx-auto rounded-full mb-6"></div>
+          <p className="text-gray-500 dark:text-gray-400 mb-14 text-sm md:text-lg max-w-2xl mx-auto font-medium">
+            Scalable, fast, and secure technologies tailored for your business needs.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5 lg:gap-6">
+            {[
+              { name: "Android", icon: "android/android-original.svg" },
+              { name: "iOS", icon: "apple/apple-original.svg", invertDark: true },
+              { name: "React.js", icon: "react/react-original.svg" },
+              { name: "React Native", icon: "react/react-original.svg" },
+              { name: "TypeScript", icon: "typescript/typescript-original.svg" },
+              { name: "Node.js", icon: "nodejs/nodejs-original.svg" },
+              { name: "Express.js", icon: "express/express-original.svg", invertDark: true },
+              { name: "Laravel", icon: "laravel/laravel-original.svg" },
+              { name: "Python", icon: "python/python-original.svg" },
+              { name: "MongoDB", icon: "mongodb/mongodb-original.svg" },
+              { name: "MySQL", icon: "mysql/mysql-original.svg" },
+              { name: "AWS Cloud", icon: "amazonwebservices/amazonwebservices-original-wordmark.svg", invertDark: true },
+              { name: "WordPress", icon: "wordpress/wordpress-plain.svg", invertDark: true },
+              { name: "PHP", icon: "php/php-original.svg" },
+              { name: "Flutter", icon: "flutter/flutter-original.svg" },
+              { name: ".NET", icon: "dot-net/dot-net-original.svg" },
+              { name: ".NET Core", icon: "dotnetcore/dotnetcore-original.svg" },
+              { name: "MSSQL", icon: "microsoftsqlserver/microsoftsqlserver-plain.svg", invertDark: true }
+            ].map((tech, idx) => (
+              <div key={idx} className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-6 flex flex-col items-center justify-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.2)] border border-gray-100 dark:border-white/5 hover:-translate-y-2 hover:shadow-[0_15px_30px_rgba(0,166,81,0.15)] hover:border-[#10b981]/30 transition-all duration-300 group cursor-pointer relative overflow-hidden">
+                {/* Subtle gradient glow behind the icon on hover */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#10b981]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="w-12 h-12 flex items-center justify-center transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3 relative z-10">
+                  <img src={`https://cdn.jsdelivr.net/gh/devicons/devicon/icons/${tech.icon}`} alt={tech.name} className={`w-full h-full object-contain ${tech.invertDark ? 'dark:invert' : ''}`} />
+                </div>
+                <span className="text-gray-900 dark:text-white font-bold text-[13px] text-center relative z-10 group-hover:text-[#10b981] transition-colors">
+                  {tech.name}
+                </span>
+              </div>
+            ))}
           </div>
-          
-          <div className="flex flex-col gap-24">
-            
-            {/* Service 1: BSNL */}
-            <div ref={service1Ref} className={`flex flex-col lg:flex-row items-center gap-12 ${s1Visible ? 'animate-slide-in-left' : 'opacity-0'}`}>
-              <div className="w-full lg:w-1/2">
-                <div className="w-14 h-14 rounded-2xl bg-[#FFF0F5] dark:bg-[#F02476]/10 flex items-center justify-center mb-6">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F02476" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">BSNL Authorities Service</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed mb-8">
-                  Instant BSNL prepaid and postpaid recharges. Never run out of balance with our blazing fast API. Experience seamless, highly secure digital payments right at your fingertips.
-                </p>
-                <Link to="/service/bsnl" className="font-bold text-sm inline-flex items-center gap-2 hover:gap-3 transition-all w-max px-6 py-3 rounded-xl text-white shadow-md hover:shadow-lg bg-gradient-to-r from-[#F02476] to-[#F35F20]">
-                  Explore Service &rarr;
-                </Link>
-              </div>
-              <div className="w-full lg:w-1/2 flex justify-center">
-                <div className="bg-gray-50 dark:bg-[#1A1A1A] rounded-[32px] shadow-sm border border-gray-100 dark:border-white/5 w-full flex justify-center items-center h-[250px] lg:h-[320px] overflow-hidden">
-                  <img src="/images/BSNL_Authorise.jpg" alt="BSNL Authorities Service" className="w-[85%] h-[85%] object-contain rounded-2xl drop-shadow-xl" />
-                </div>
-              </div>
-            </div>
 
-            {/* Service 2: AEPS */}
-            <div ref={service2Ref} className={`flex flex-col lg:flex-row-reverse items-center gap-12 ${s2Visible ? 'animate-slide-in-right' : 'opacity-0'}`} style={{ animationDelay: '0.1s' }}>
-              <div className="w-full lg:w-1/2">
-                <div className="w-14 h-14 rounded-2xl bg-[#F5F3FF] dark:bg-[#8B5CF6]/10 flex items-center justify-center mb-6">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">AEPS</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed mb-8">
-                  Aadhaar Enabled Payment System allows seamless cash withdrawals and balance inquiries using biometric authentication. Extremely secure and available 24/7.
-                </p>
-                <Link to="/service/aeps" className="font-bold text-sm inline-flex items-center gap-2 hover:gap-3 transition-all w-max px-6 py-3 rounded-xl text-white shadow-md hover:shadow-lg bg-gradient-to-r from-[#F02476] to-[#F35F20]">
-                  Explore Service &rarr;
-                </Link>
-              </div>
-              <div className="w-full lg:w-1/2 flex justify-center">
-                <div className="bg-gray-50 dark:bg-[#1A1A1A] rounded-[32px] shadow-sm border border-gray-100 dark:border-white/5 w-full flex justify-center items-center h-[250px] lg:h-[320px] overflow-hidden">
-                  <img src="/images/About_AEPs.png" alt="AEPS" className="w-full h-full object-contain p-4 lg:p-6 drop-shadow-xl" />
-                </div>
-              </div>
-            </div>
-
-            {/* Service 3: BBPS */}
-            <div ref={service3Ref} className={`flex flex-col lg:flex-row items-center gap-12 ${s3Visible ? 'animate-slide-in-left' : 'opacity-0'}`} style={{ animationDelay: '0.1s' }}>
-              <div className="w-full lg:w-1/2">
-                <div className="w-14 h-14 rounded-2xl bg-[#FFF7ED] dark:bg-[#F97316]/10 flex items-center justify-center mb-6">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">BBPS</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed mb-8">
-                  Pay all your utility bills including Electricity, Water, Gas, and Fastag instantly through the integrated Bharat Bill Payment System. Your one-stop solution.
-                </p>
-                <Link to="/service/bbps" className="font-bold text-sm inline-flex items-center gap-2 hover:gap-3 transition-all w-max px-6 py-3 rounded-xl text-white shadow-md hover:shadow-lg bg-gradient-to-r from-[#F02476] to-[#F35F20]">
-                  Explore Service &rarr;
-                </Link>
-              </div>
-              <div className="w-full lg:w-1/2 flex justify-center">
-                <div className="bg-gray-50 dark:bg-[#1A1A1A] rounded-[32px] shadow-sm border border-gray-100 dark:border-white/5 w-full flex justify-center items-center h-[250px] lg:h-[320px] overflow-hidden">
-                  <img src="/images/BBPS.png" alt="BBPS" className="w-full h-full object-contain p-4 lg:p-6 drop-shadow-xl" />
-                </div>
-              </div>
-            </div>
-
-            {/* Service 4: Bus Booking */}
-            <div ref={service4Ref} className={`flex flex-col lg:flex-row-reverse items-center gap-12 ${s4Visible ? 'animate-slide-in-right' : 'opacity-0'}`} style={{ animationDelay: '0.1s' }}>
-              <div className="w-full lg:w-1/2">
-                <div className="w-14 h-14 rounded-2xl bg-[#EFF6FF] dark:bg-[#3B82F6]/10 flex items-center justify-center mb-6">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2"><rect x="2" y="7" width="20" height="10" rx="2" ry="2"></rect><path d="M2 17h20"></path><path d="M6 17v2"></path><path d="M18 17v2"></path></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4 leading-tight">Bus Booking</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed mb-8">
-                  Book bus tickets across India seamlessly via our robust API integration. Wide network, confirmed seats, and real-time updates for a hassle-free travel experience.
-                </p>
-                <Link to="/service/bus-booking" className="font-bold text-sm inline-flex items-center gap-2 hover:gap-3 transition-all w-max px-6 py-3 rounded-xl text-white shadow-md hover:shadow-lg bg-gradient-to-r from-[#F02476] to-[#F35F20]">
-                  Explore Service &rarr;
-                </Link>
-              </div>
-              <div className="w-full lg:w-1/2 flex justify-center">
-                <div className="bg-gray-50 dark:bg-[#1A1A1A] rounded-[32px] shadow-sm border border-gray-100 dark:border-white/5 w-full flex justify-center items-center h-[250px] lg:h-[320px] overflow-hidden">
-                  <img src="/images/About_bus.jpg" alt="Bus Booking" className="w-[90%] h-[90%] object-cover rounded-2xl drop-shadow-xl" />
-                </div>
-              </div>
-            </div>
-
-          </div>
         </div>
       </section>
 
@@ -389,165 +486,114 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 relative">
           
           {/* Header */}
-          <div className={`text-center mb-20 ${isWhyChooseUsVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
-            <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-[#F02476]/10 border border-[#F02476]/20 text-[#F02476] font-bold text-[10px] mb-4 uppercase tracking-widest shadow-sm">
+          <div className={`text-center mb-16 ${isWhyChooseUsVisible ? 'animate-fade-in-up' : 'opacity-0'}`}>
+            <div className="inline-flex items-center justify-center px-4 py-1.5 rounded-full bg-[#10b981]/10 border border-[#10b981]/20 text-[#10b981] font-bold text-[10px] mb-4 uppercase tracking-widest shadow-sm">
               Why Choose Us
             </div>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[#111111] dark:text-white leading-tight">
-              Smart Digital Payment Solutions <br className="hidden md:block"/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F02476] to-[#F35F20]">For Your Business</span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#111111] dark:text-white leading-snug tracking-tight">
+              Elite Engineering & Strategy <br className="hidden md:block"/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f766e] to-[#10b981]">For Unstoppable Growth</span>
             </h2>
           </div>
 
-          {/* 3-Column Layout */}
-          <div className="grid lg:grid-cols-3 gap-12 lg:gap-8 items-center">
-            
-            {/* Left Column: Features */}
-            <div className={`flex flex-col gap-8 ${isWhyChooseUsVisible ? 'animate-slide-in-left opacity-100' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
-              {/* Item 1 */}
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F02476] to-[#F35F20] flex items-center justify-center shrink-0 shadow-md shadow-[#F02476]/20 mt-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#F02476] transition-colors mb-1">Secure Transactions</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Top-tier encryption ensures your digital information is protected. We maintain the highest trust and security standards.
-                  </p>
-                </div>
-              </div>
-              {/* Item 2 */}
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F02476] to-[#F35F20] flex items-center justify-center shrink-0 shadow-md shadow-[#F02476]/20 mt-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#F02476] transition-colors mb-1">Real-Time Alerts</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Stay informed instantly. Real-time notifications play a crucial role in keeping you in control of your activities.
-                  </p>
-                </div>
-              </div>
-              {/* Item 3 */}
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F02476] to-[#F35F20] flex items-center justify-center shrink-0 shadow-md shadow-[#F02476]/20 mt-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#F02476] transition-colors mb-1">24/7 Customer Support</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Our dedicated support team is always available. We serve as your primary point of contact whenever you need help.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Center Column: Mockup */}
-            <div className={`relative flex justify-center py-10 lg:py-0 ${isWhyChooseUsVisible ? 'animate-fade-in-up opacity-100' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-              
-              {/* Background Glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#F02476]/20 to-[#3B82F6]/20 blur-3xl rounded-full scale-75"></div>
-
-              {/* The Phone Mockup & Ripples Wrapper */}
-              <div className="relative animate-float z-10 flex justify-center items-center">
-                {/* Circular Animated Ripples with Gradient Pattern */}
-                <div className="absolute top-1/2 left-1/2 w-[340px] h-[340px] rounded-full animate-pulse-ring -z-10" style={{ background: 'radial-gradient(circle, transparent 35%, rgba(240,36,118,0.4) 60%, rgba(243,95,32,0.9) 85%, transparent 100%)' }}></div>
-                <div className="absolute top-1/2 left-1/2 w-[340px] h-[340px] rounded-full animate-pulse-ring -z-10" style={{ background: 'radial-gradient(circle, transparent 35%, rgba(240,36,118,0.4) 60%, rgba(243,95,32,0.9) 85%, transparent 100%)', animationDelay: '1s' }}></div>
-                <div className="absolute top-1/2 left-1/2 w-[340px] h-[340px] rounded-full animate-pulse-ring -z-10" style={{ background: 'radial-gradient(circle, transparent 35%, rgba(240,36,118,0.4) 60%, rgba(243,95,32,0.9) 85%, transparent 100%)', animationDelay: '2s' }}></div>
+          {/* Grid Layout for Features */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { num: "01", title: "High-Performance", desc: "Blazingly fast, infinitely scalable systems built to handle millions of requests effortlessly." },
+              { num: "02", title: "Pixel-Perfect UI/UX", desc: "Stunning designs engineered with psychology to turn your visitors into loyal customers." },
+              { num: "03", title: "Bulletproof Security", desc: "Enterprise-grade encryption and audits to ensure complete protection of your data." },
+              { num: "04", title: "Flawless APIs", desc: "Whether it's complex payment gateways or CRMs, our APIs connect seamlessly with zero latency." },
+              { num: "05", title: "SEO Dominance", desc: "We don't just build websites; we rank them. Put your business at the top of search results." },
+              { num: "06", title: "24/7 Elite Support", desc: "Our dedicated team provides round-the-clock technical support to ensure 99.99% uptime." }
+            ].map((item, idx) => (
+              <div key={idx} className={`bg-white dark:bg-[#1A1A1A] rounded-2xl p-8 shadow-[0_4px_20px_rgba(0,0,0,0.02)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100/80 dark:border-white/5 relative overflow-hidden group hover:-translate-y-1.5 hover:border-[#10b981]/30 dark:hover:border-[#10b981]/20 hover:shadow-[0_20px_40px_rgba(13,148,136,0.08)] dark:hover:shadow-[0_20px_40px_rgba(13,148,136,0.15)] transition-all duration-300 ease-out ${isWhyChooseUsVisible ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: `${0.1 * idx}s` }}>
                 
-                {/* Phone Mockup */}
-                <div className="w-[260px] h-[480px] bg-[#111] dark:bg-[#1A1A1A] rounded-[36px] border-[8px] border-gray-900 dark:border-[#222] shadow-[0_0_50px_rgba(240,36,118,0.15)] relative flex flex-col bg-clip-padding">
-                  <div className="absolute top-0 inset-x-0 h-5 bg-gray-900 dark:bg-[#222] w-[120px] mx-auto rounded-b-2xl z-20"></div>
-                  
-                  {/* App Screen */}
-                <div className="flex-1 bg-gray-50 dark:bg-[#111111] rounded-[32px] overflow-hidden flex flex-col pt-8 pb-4 px-4 relative">
-                  
-                  {/* Top Header */}
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-[#F02476] flex items-center justify-center text-white font-bold text-xs">JA</div>
-                      <div>
-                        <p className="text-[9px] text-gray-500 font-bold">Welcome back,</p>
-                        <p className="text-xs font-extrabold text-gray-900 dark:text-white">Admin User</p>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-800 shadow flex items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F02476" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-                    </div>
+                <div className="flex items-start gap-5 relative z-10">
+                  <span className="text-[50px] leading-none font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 group-hover:from-[#0f766e] group-hover:to-[#10b981] transition-all duration-300 drop-shadow-sm shrink-0 select-none">
+                    {item.num}
+                  </span>
+                  <div className="pt-2">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-[#10b981] transition-colors mb-2 tracking-tight">{item.title}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed font-medium">
+                      {item.desc}
+                    </p>
                   </div>
-
-                  {/* Balance Card inside mockup (Glassmorphic) */}
-                  <div className="w-full bg-gradient-to-br from-[#8B5CF6]/90 to-[#F02476]/90 backdrop-blur-xl border border-white/20 rounded-2xl p-5 text-white mb-6 shadow-lg relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#F02476]/40 rounded-full blur-xl -ml-10 -mb-10"></div>
-                    <p className="text-xs font-medium text-white/90 mb-1 relative z-10">Total Balance</p>
-                    <h3 className="text-3xl font-black mb-4 relative z-10 drop-shadow-sm">₹ 3,403.09</h3>
-                    <div className="flex justify-between items-center text-[10px] font-bold bg-white/20 border border-white/10 p-2 rounded-lg backdrop-blur-md relative z-10">
-                      <span>Card Limit: ₹ 10,000</span>
-                      <div className="flex -space-x-1">
-                        <div className="w-4 h-4 rounded-full bg-red-500/90 shadow-sm"></div>
-                        <div className="w-4 h-4 rounded-full bg-yellow-400/90 mix-blend-screen shadow-sm"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Grid Services */}
-                  <h4 className="text-sm font-extrabold text-gray-900 dark:text-white mb-3">Quick Services</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                      <div key={i} className="aspect-square bg-white dark:bg-[#1A1A1A] rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center gap-1">
-                        <div className="w-5 h-5 rounded bg-gray-100 dark:bg-gray-800"></div>
-                        <div className="w-8 h-1 rounded bg-gray-200 dark:bg-gray-700"></div>
-                      </div>
-                    ))}
-                  </div>
-
                 </div>
-              </div>
-              </div>
 
-            </div>
+                {/* Subtle Background Glow on hover */}
+                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-gradient-to-br from-[#0f766e]/5 to-[#10b981]/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-            {/* Right Column: Features */}
-            <div className={`flex flex-col gap-8 ${isWhyChooseUsVisible ? 'animate-slide-in-right opacity-100' : 'opacity-0'}`} style={{ animationDelay: '0.6s' }}>
-              {/* Item 4 */}
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F02476] to-[#F35F20] flex items-center justify-center shrink-0 shadow-md shadow-[#F02476]/20 mt-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+
+
+      {/* 6. MEET OUR TEAM SECTION */}
+      <section className="py-24 bg-white dark:bg-[#111111] transition-colors duration-300">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-12 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
+            Meet Our <span className="text-[#10b981]">Team</span>
+          </h2>
+          <div className="w-12 h-1.5 bg-[#10b981] mx-auto rounded-full mb-6"></div>
+          <p className="text-gray-550 dark:text-gray-400 mb-16 text-sm md:text-lg mx-auto font-medium max-w-2xl">
+            The elite minds behind every pixel and every line of code.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {[
+              { name: "Sachin Balyan", role: "Founder & Director", desc: "Visionary leader driving innovation with over 10 years of expertise in software architecture and business strategy. Dedicated to building systems that scale to millions.", img: "/images/Sachin_Balyan.jpeg" },
+              { name: "Vishnu Prajapat", role: "Web & App Developer", desc: "Expert in building scalable React, Node, and Flutter applications. Passionate about crafting seamless, pixel-perfect digital experiences.", img: "/images/Vishnu_prajapat.jpeg" }
+            ].map((member, idx) => (
+              <div key={idx} className="bg-gray-50 dark:bg-[#1A1A1A] rounded-3xl p-8 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 dark:border-white/5 hover:shadow-lg transition-all duration-300 group w-full">
+                <div className="relative shrink-0">
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-white dark:border-[#222] shadow-md relative z-10">
+                    <img src={member.img} alt={member.name} className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" />
+                  </div>
+                  <div className="absolute inset-0 rounded-full border-2 border-[#10b981] scale-[1.12] opacity-50 group-hover:rotate-180 group-hover:opacity-100 transition-all duration-700 pointer-events-none border-dashed"></div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#F02476] transition-colors mb-1">Bank Beating Rates</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    We offer highly competitive commission rates on financial products and API services that banks can't match.
-                  </p>
+                  <h3 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-1">{member.name}</h3>
+                  <p className="text-[#10b981] font-bold text-sm mb-3">{member.role}</p>
+                  <p className="text-gray-550 dark:text-gray-400 text-sm leading-relaxed mb-4">{member.desc}</p>
                 </div>
               </div>
-              {/* Item 5 */}
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F02476] to-[#F35F20] flex items-center justify-center shrink-0 shadow-md shadow-[#F02476]/20 mt-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#F02476] transition-colors mb-1">Faster & Cheaper</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Our fast and cost-effective solutions are in high demand as businesses seek greater efficiency and profit.
-                  </p>
-                </div>
-              </div>
-              {/* Item 6 */}
-              <div className="flex gap-4 group">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F02476] to-[#F35F20] flex items-center justify-center shrink-0 shadow-md shadow-[#F02476]/20 mt-1">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-[#F02476] transition-colors mb-1">24/7 Account Access</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                    Enjoy complete flexibility and convenience. Manage your accounts and transactions anytime, anywhere.
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
+      {/* 7. FAQ SECTION */}
+      <section className="py-14 bg-[#F8FAFC] dark:bg-[#0A0A0A] transition-colors duration-300">
+        <div className="max-w-[800px] mx-auto px-6 lg:px-12 text-center">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">
+            Frequently <span className="text-[#10b981]">Asked Questions</span>
+          </h2>
+          <div className="w-12 h-1.5 bg-[#10b981] mx-auto rounded-full mb-12"></div>
+
+          <div className="flex flex-col gap-4 text-left">
+            {faqs.map((faq, idx) => {
+              const isOpen = activeFaq === idx;
+              return (
+                <div key={idx} className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100 dark:border-white/5 overflow-hidden transition-all duration-300 hover:shadow-md">
+                  <button 
+                    onClick={() => setActiveFaq(isOpen ? null : idx)} 
+                    className="w-full px-6 py-5 flex items-center justify-between focus:outline-none"
+                  >
+                    <span className="font-bold text-gray-900 dark:text-white text-[15px] sm:text-base pr-4">{faq.q}</span>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 ${isOpen ? 'bg-[#10b981] text-white rotate-180' : 'bg-teal-50 dark:bg-[#10b981]/10 text-[#10b981]'}`}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                  </button>
+                  <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="px-6 pb-5 text-gray-500 dark:text-gray-400 text-sm leading-relaxed border-t border-gray-50 dark:border-white/5 pt-4">
+                      {faq.a}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
