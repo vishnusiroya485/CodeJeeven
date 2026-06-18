@@ -113,7 +113,7 @@ export default function App() {
             
             {/* Enhanced Logo */}
             <a href="/" className="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform animate-fade-in-up">
-              <img src="/images/LOGO_CJ.png" className="h-[50px] w-auto scale-[2.2] origin-left -ml-2" alt="CodeJeevan Logo" />
+              <img src="/images/LOGO_CJ.png" className="h-[60px] w-auto scale-[2.2] origin-left -ml-2" alt="CodeJeevan Logo" />
             </a>
 
             {/* Desktop Nav */}
@@ -204,7 +204,9 @@ export default function App() {
         </Routes>
 
         {/* 6. FOOTER */}
-        <footer className="bg-white dark:bg-[#111111] pt-8 pb-4 mt-auto border-t-[4px] border-[#10b981] relative overflow-hidden transition-colors duration-300 shadow-[0_-5px_25px_rgba(0,0,0,0.02)]">
+        <footer className="bg-white dark:bg-[#111111] pt-8 pb-4 mt-auto relative overflow-hidden transition-colors duration-300 shadow-[0_-5px_25px_rgba(0,0,0,0.02)]">
+          {/* Gradient Top Border */}
+          <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-[#14b8a6] via-[#10b981] to-[#059669]"></div>
           {/* Ambient Footer Glow */}
           <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] bg-[#10b981]/5 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -212,7 +214,7 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 mt-2">
               <div className="md:col-span-2">
                 <div className="mb-4 flex items-center gap-2">
-                  <img src="/images/LOGO_CJ.png" className="h-[55px] w-auto scale-[1.7] origin-left drop-shadow-sm" alt="CodeJeevan Logo" />
+                  <img src="/images/LOGO_CJ.png" className="h-[65px] w-auto scale-[1.7] origin-left drop-shadow-sm" alt="CodeJeevan Logo" />
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-sm text-[13px] leading-relaxed font-medium">
                   An elite software engineering and strategy agency. We craft high-performance SaaS applications, custom APIs, and pixel-perfect UI/UX interfaces that scale with your growth.
@@ -236,14 +238,14 @@ export default function App() {
               </div>
             </div>
             <div className="border-t border-gray-100 dark:border-white/5 pt-6 flex items-center justify-center">
-              <p className="text-gray-400 dark:text-gray-500 text-xs font-semibold tracking-wide">© 2026 CodeJeevan. All rights reserved.</p>
+              <p className="text-gray-400 dark:text-gray-500 text-xs font-semibold tracking-wide">© 2026 CodeJeevan.com. All rights reserved.</p>
             </div>
           </div>
         </footer>
 
         {/* Floating WhatsApp Button */}
         <a 
-          href="https://wa.me/919876543210" 
+          href="https://wa.me/917734887834" 
           target="_blank" 
           rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-12 h-12 bg-[#25D366] hover:bg-[#20ba5a] text-white rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 animate-wa-float group"

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronRightIcon } from '../components/Icons';
 
 export default function SitemapPage() {
   useEffect(() => {
@@ -46,13 +47,21 @@ export default function SitemapPage() {
   ];
 
   return (
-    <div className="pt-24 pb-24 bg-white dark:bg-[#0A0A0A] min-h-screen transition-colors duration-300 relative overflow-hidden">
+    <div className="pt-28 pb-20 bg-white dark:bg-[#0A0A0A] min-h-screen transition-colors duration-300 relative overflow-hidden">
       {/* Background accents */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#10b981]/5 rounded-full blur-[120px] pointer-events-none -z-10"></div>
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#0f766e]/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
 
-      {/* Sleek Header Card */}
-      <div className="max-w-6xl mx-auto px-6 lg:px-12 relative z-10">
+      {/* Sleek Header Card (Matched perfectly to Privacy/Terms width) */}
+      <div className="max-w-[850px] mx-auto px-6 relative z-10">
+        
+        {/* Sleek Breadcrumb */}
+        <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-8 animate-fade-in-up">
+          <Link to="/" className="hover:text-[#10b981] font-bold transition-colors">Home</Link>
+          <ChevronRightIcon className="w-3 h-3 text-gray-400" />
+          <span className="text-gray-900 dark:text-white font-extrabold px-3 py-1 rounded-full bg-white dark:bg-[#1A1A1A] shadow-sm border border-gray-100 dark:border-white/5">Website Sitemap</span>
+        </div>
+
         <div className="bg-gradient-to-br from-[#0f766e] to-[#10b981] rounded-3xl p-8 md:p-10 text-center mb-16 shadow-lg shadow-[#10b981]/20 relative overflow-hidden animate-fade-in-up">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           <div className="relative z-10">
@@ -66,20 +75,23 @@ export default function SitemapPage() {
       </div>
 
       {/* Grid */}
-      <div className="max-w-6xl mx-auto px-6 lg:px-12 relative z-10">
+      <div className="max-w-[1000px] mx-auto px-6 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {sitemapData.map((section, idx) => (
-            <div key={idx} className="bg-white dark:bg-[#111111] rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none border border-gray-100 dark:border-white/5 hover:border-[#10b981]/30 transition-all duration-300 group hover:-translate-y-1">
-              <div className="w-12 h-12 bg-[#10b981]/10 text-[#10b981] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div key={idx} className="bg-white dark:bg-[#111111] rounded-3xl p-8 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-none border border-gray-100 dark:border-white/5 hover:border-[#10b981]/30 hover:shadow-[0_15px_40px_rgba(16,185,129,0.1)] transition-all duration-500 group hover:-translate-y-2 relative overflow-hidden">
+              {/* Premium Corner Glow */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#10b981]/10 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="w-14 h-14 bg-gradient-to-br from-[#10b981]/10 to-[#0f766e]/10 text-[#10b981] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-inner">
                 {section.icon}
               </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-white/10 pb-4">{section.title}</h2>
-              <ul className="flex flex-col gap-3">
+              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-white/10 pb-4">{section.title}</h2>
+              <ul className="flex flex-col gap-3 relative z-10">
                 {section.links.map((link, lIdx) => (
                   <li key={lIdx}>
-                    <Link to={link.path} className="flex items-center text-gray-600 dark:text-gray-400 hover:text-[#10b981] dark:hover:text-[#10b981] font-medium transition-colors group/link">
-                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700 mr-3 group-hover/link:bg-[#10b981] group-hover/link:scale-150 transition-all"></span>
-                      {link.label}
+                    <Link to={link.path} className="flex items-center text-gray-500 dark:text-gray-400 hover:text-[#10b981] dark:hover:text-[#10b981] font-medium transition-colors group/link py-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-gray-600 mr-3 group-hover/link:bg-[#10b981] group-hover/link:scale-150 transition-all"></span>
+                      <span className="group-hover/link:translate-x-1 transition-transform">{link.label}</span>
                     </Link>
                   </li>
                 ))}

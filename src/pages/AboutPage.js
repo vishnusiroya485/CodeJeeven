@@ -71,32 +71,26 @@ export default function AboutPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-[850px] mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-[1200px] mx-auto">
             {[
-              { 
-                name: "Sachin Balyan", 
-                role: "Founder & Director", 
-                desc: "Full-stack engineer specializing in scalable systems and business strategy.", 
-                img: "/images/Sachin_Balyan.jpeg" 
-              },
-              { 
-                name: "Vishnu Prajapat", 
-                role: "Web & App Developer", 
-                desc: "Specialist in high-performance React, Node.js, and Flutter applications.", 
-                img: "/images/Vishnu_prajapat.jpeg" 
-              }
+              { name: "Sachin Balyan", role: "Founder", desc: "Visionary leader driving innovation with over 10 years of expertise in software architecture and business strategy. Dedicated to building systems that scale to millions.", img: "/images/Sachin_Balyan.jpeg" },
+              { name: "Kapil Choudhary", role: "CEO", desc: "Strategic leader driving business growth and operational excellence. Passionate about scaling enterprise solutions.", img: "/images/kapil.jpg" },
+              { name: "Neha Dalal", role: "Director", desc: "Guiding the company vision and ensuring operational success across all departments.", img: "/images/Neha.jpeg" },
+              { name: "Pratham Tiwari", role: "Sales Executive", desc: "Driving business growth through strategic partnerships and client relations. Dedicated to delivering value and ensuring client success.", img: "/images/pratham.jpeg" },
+              { name: "Vishnu Prajapat", role: "Full Stack Developer", desc: "Expert in building scalable React, Node, and Flutter applications. Passionate about crafting seamless, pixel-perfect digital experiences.", img: "/images/Vishnu_prajapat.jpeg" }
             ].map((member, idx) => (
-              <div key={idx} className="bg-white dark:bg-[#111111] rounded-2xl p-6 border border-gray-100 dark:border-white/5 flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 hover:shadow-md transition-all duration-300 group">
+              <div key={idx} className="bg-gradient-to-br from-white to-gray-50 hover:from-gray-50 hover:to-gray-100 dark:from-[#1E1E1E] dark:to-[#111111] dark:hover:from-[#151515] dark:hover:to-[#080808] rounded-3xl p-6 md:p-8 flex flex-row items-center text-left gap-5 md:gap-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100 dark:border-white/10 hover:border-[#10b981]/30 hover:shadow-[0_15px_40px_rgba(16,185,129,0.1)] hover:-translate-y-1.5 transition-all duration-500 group w-full relative overflow-hidden min-h-[160px]">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#10b981]/10 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="relative shrink-0">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white dark:border-[#222] shadow relative z-10">
-                    <img src={member.img} alt={member.name} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500" />
+                  <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden border-[3px] border-white dark:border-[#2A2A2A] shadow-md relative z-10">
+                    <img src={member.img} alt={member.name} className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500" />
                   </div>
-                  <div className="absolute inset-0 rounded-full border border-[#10b981] scale-[1.15] opacity-50 group-hover:rotate-180 group-hover:opacity-100 transition-all duration-700 pointer-events-none border-dashed"></div>
+                  <div className="absolute inset-0 rounded-full border border-[#10b981] scale-[1.18] opacity-50 group-hover:rotate-180 group-hover:opacity-100 transition-all duration-700 pointer-events-none border-dashed"></div>
                 </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-gray-900 dark:text-white mb-0.5">{member.name}</h3>
-                  <p className="text-[#10b981] font-extrabold text-[10px] mb-2 uppercase tracking-wider">{member.role}</p>
-                  <p className="text-gray-550 dark:text-gray-400 text-xs leading-relaxed font-semibold">{member.desc}</p>
+                <div className="flex-1 min-w-0 z-10">
+                  <h3 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1 truncate">{member.name}</h3>
+                  <p className="text-[#10b981] font-bold text-[11px] md:text-xs uppercase tracking-widest mb-2 truncate">{member.role}</p>
+                  <p className="text-gray-500 dark:text-gray-400 text-[13px] leading-relaxed line-clamp-3">{member.desc}</p>
                 </div>
               </div>
             ))}

@@ -147,7 +147,19 @@ export default function ServicesPage() {
           <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
           <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
           <path d="M2 2l7.586 7.586"></path>
-          <circle cx="11" cy="11" r="2"></circle>
+        </svg>
+      )
+    },
+    {
+      title: "Digital Marketing",
+      desc: "Data-driven marketing campaigns and advanced social media strategies to boost your ROI and scale your brand reach.",
+      link: "/contact",
+      color: "text-blue-500",
+      bg: "bg-blue-500/10",
+      border: "hover:border-blue-500/30",
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
         </svg>
       )
     }
@@ -180,10 +192,9 @@ export default function ServicesPage() {
         {/* Services Grid (cards are made slightly smaller with p-6 and tighter spacings) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up delay-100">
           {servicesList.map((service, idx) => (
-            <Link 
-              to={service.link} 
+            <div 
               key={idx}
-              className={`bg-white dark:bg-[#111111] rounded-2xl p-6 border border-gray-100 dark:border-white/5 ${service.border} shadow-[0_4px_20px_rgba(0,0,0,0.01)] dark:shadow-none hover:shadow-[0_20px_45px_rgba(37,99,235,0.06)] dark:hover:bg-[#161616] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group cursor-pointer relative overflow-hidden`}
+              className={`bg-white dark:bg-[#111111] rounded-2xl p-6 border border-gray-100 dark:border-white/5 ${service.border} shadow-[0_4px_20px_rgba(0,0,0,0.01)] dark:shadow-none hover:shadow-[0_20px_45px_rgba(37,99,235,0.06)] dark:hover:bg-[#161616] hover:-translate-y-1 transition-all duration-300 flex flex-col group relative overflow-hidden`}
             >
               <div>
                 {/* Icon Box */}
@@ -200,15 +211,9 @@ export default function ServicesPage() {
                 </p>
               </div>
 
-              {/* Card Footer Link indicator */}
-              <div className="mt-6 flex items-center gap-2 text-xs font-bold text-[#10b981] group-hover:translate-x-1 transition-transform">
-                <span>Explore service</span>
-                <ChevronRightIcon className="w-3 h-3" />
-              </div>
-
               {/* Interactive subtle corner accent */}
               <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[#10b981]/5 to-transparent rounded-bl-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Link>
+            </div>
           ))}
         </div>
 
